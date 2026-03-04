@@ -40,8 +40,8 @@ pg = st.navigation({
         st.Page(project_info_page, title="ข้อมูลโปรเจค", icon="📂"),
     ],
     "ระบบพยากรณ์": [
-        st.Page("pages/1_Ensemble.py", title="1_Ensemble.py", icon="🌳"),
-        st.Page("pages/2_NN.py", title="2_NN.py", icon="🧠"),
+        st.Page("pages/1_Ensemble.py", title="Ensemble", icon="🌳"),
+        st.Page("pages/2_NN.py", title="Neural Network", icon="🧠"),
     ]
 })
 
