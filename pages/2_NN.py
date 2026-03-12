@@ -23,23 +23,51 @@ def load_nn_model():
     return None, None
 
 st.title("🧠 ทดสอบระบบจำแนกภาพ (Neural Network)")
+st.write("อัปโหลดรูปภาพผักหรือผลไม้ เพื่อให้โมเดล AI ทำการจำแนกประเภท")
+
 nn_model, labels = load_nn_model()
+
+# 🚨 จุดที่ต้องแก้: เปลี่ยนตัวเลข 88.75 ให้ตรงกับ Accuracy จริงของคุณตอนเทรน Neural Network 🚨
+TRAINING_ACCURACY = "88.75%"
 
 if nn_model:
     uploaded_file = st.file_uploader("อัปโหลดรูปภาพ", type=["jpg", "png", "jpeg"])
     if uploaded_file:
-        image = Image.open(uploaded_file)
-        st.image(image, caption="รูปที่อัปโหลด", width=400)
         
-        with st.spinner('กำลังประมวลผล...'):
-            img = image.convert('RGB').resize((224, 224))
-            img_array = np.array(img) / 255.0
-            img_array = np.expand_dims(img_array, axis=0)
-            
-            preds = nn_model.predict(img_array)
-            idx = str(np.argmax(preds))
-            result = labels.get(idx, f"คลาส {idx}") if labels else f"คลาส {idx}"
-            
-            st.success(f"🎉 ผลการทำนาย: **{result}**")
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            image = Image.open(uploaded_file)
+            st.image(image, caption="รูปที่อัปโหลด", use_container_width=True)
+        
+        with col2:
+            with st.spinner('กำลังให้ AI ประมวลผล...'):
+                # Preprocessing
+                img = image.convert('RGB').resize((224, 224))
+                img_array = np.array(img) / 255.0
+                img_array = np.expand_dims(img_array, axis=0)
+                
+                # Prediction
+                preds = nn_model.predict(img_array)
+                idx = np.argmax(preds)
+                idx_str = str(idx)
+                
+                result = labels.get(idx_str, f"คลาส {idx_str}") if labels else f"คลาส {idx_str}"
+                
+                # คำนวณความมั่นใจ (Confidence Score) ของคลาสที่เลือก
+                confidence = float(np.max(preds)) * 100
+                
+                # แสดงผลลัพธ์
+                st.markdown("### ผลลัพธ์การวิเคราะห์")
+                st.success(f"🎉 ตรวจพบว่าเป็น: **{result}**")
+                
+                # แสดงค่า Accuracy เชิงสถิติ
+                st.metric(label="เปอร์เซ็นต์ความมั่นใจ (Confidence)", value=f"{confidence:.2f}%", help="ความน่าจะเป็นที่โมเดลคิดว่ารูปนี้ตรงกับผลลัพธ์ที่สุด")
+                st.metric(label="ความแม่นยำภาพรวมของโมเดล (Overall Accuracy)", value=TRAINING_ACCURACY, help="อ้างอิงจากคะแนน Accuracy ของ Validation Set ระหว่างการเทรน")
+                
+                # แถบแสดงความมั่นใจ (Progress Bar)
+                st.write("ระดับความมั่นใจ:")
+                st.progress(int(confidence))
+                
 else:
-    st.error("⚠️ ไม่พบไฟล์โมเดลในโฟลเดอร์ Neural Network")
+    st.error("⚠️ ไม่พบไฟล์โมเดล (`nn_model.h5`) ในโฟลเดอร์ Neural Network")
