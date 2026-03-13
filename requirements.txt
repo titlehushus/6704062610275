@@ -5,3 +5,5 @@ scikit-learn
 tensorflow-cpu==2.15.0
 pillow
 joblib
+h5py
+protobuf<4
