@@ -4,6 +4,5 @@ numpy
 streamlit
 Pillow
 tensorflow
-tf-keras
 h5py
 altair==4.2.2
