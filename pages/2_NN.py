@@ -1,9 +1,25 @@
+import os
+os.environ["TF_USE_LEGACY_KERAS"] = "1"  # สั่งให้ใช้ระบบโหลดโมเดลแบบเก่า
+
 import streamlit as st
 import tensorflow as tf
-from PIL import Image
+from tensorflow.keras.preprocessing import image
 import numpy as np
 import json
-import os
+
+# หา Path ของโฟลเดอร์ Root
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir)
+nn_model_path = os.path.join(root_dir, 'nn_model.h5')
+json_path = os.path.join(root_dir, 'class_labels.json')
+
+# โหลด Model และ Class Labels
+try:
+    model = tf.keras.models.load_model(nn_model_path)
+    with open(json_path, 'r', encoding='utf-8') as f:
+        class_names = json.load(f)
+except Exception as e:
+    st.error(f"เกิดข้อผิดพลาดในการโหลดโมเดล: {e}")
 
 st.set_page_config(page_title="Neural Network", layout="wide")
 
