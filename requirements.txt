@@ -3,7 +3,7 @@ pandas
 numpy>=2.0.0
 streamlit>=1.30.0
 Pillow
-tensorflow
-tf-keras
+tensorflow==2.16.1
+tf-keras==2.16.0
 h5py
 altair==4.2.2

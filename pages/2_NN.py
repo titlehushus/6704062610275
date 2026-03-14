@@ -1,8 +1,8 @@
 import os
-os.environ["TF_USE_LEGACY_KERAS"] = "1"  
+os.environ["TF_USE_LEGACY_KERAS"] = "1"  # สำคัญมาก: ต้องอยู่บนสุด
 
 import streamlit as st
-import tf_keras  # 🚨 เปลี่ยนจาก import tensorflow as tf มาเรียกใช้ tf_keras โดยตรง
+import tensorflow as tf  # 🚨 กลับมาใช้ tensorflow ตามปกติ
 from PIL import Image
 import numpy as np
 import json
@@ -20,8 +20,8 @@ def load_nn_model():
     
     try:
         if os.path.exists(nn_path):
-            # 🚨 เปลี่ยนมาใช้ tf_keras.models.load_model 
-            model = tf_keras.models.load_model(nn_path, compile=False)
+            # 🚨 เรียกใช้จาก tf.keras ปกติ
+            model = tf.keras.models.load_model(nn_path, compile=False)
             labels = None
             
             if os.path.exists(lbl_path):
@@ -40,7 +40,6 @@ st.write("อัปโหลดรูปภาพผักหรือผลไ�
 
 nn_model, labels = load_nn_model()
 
-# 🚨 เปลี่ยนตัวเลขให้ตรงกับ Accuracy จริงของคุณตอนเทรน 
 TRAINING_ACCURACY = "88.75%"
 
 if nn_model:
@@ -55,12 +54,12 @@ if nn_model:
         
         with col2:
             with st.spinner('กำลังให้ AI ประมวลผล...'):
-                # 4. Preprocessing
+                # Preprocessing
                 img = image.convert('RGB').resize((224, 224))
                 img_array = np.array(img) / 255.0  
                 img_array = np.expand_dims(img_array, axis=0) 
                 
-                # 5. Prediction
+                # Prediction
                 preds = nn_model.predict(img_array)
                 idx = np.argmax(preds)
                 idx_str = str(idx)
@@ -72,7 +71,7 @@ if nn_model:
                 
                 confidence = float(np.max(preds)) * 100
                 
-                # 6. แสดงผลลัพธ์
+                # แสดงผลลัพธ์
                 st.markdown("### ผลลัพธ์การวิเคราะห์")
                 st.success(f"🎉 ตรวจพบว่าเป็น: **{result}**")
                 
