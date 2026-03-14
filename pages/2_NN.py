@@ -2,27 +2,7 @@ import os
 os.environ["TF_USE_LEGACY_KERAS"] = "1"
 
 import streamlit as st
-import tensorflow as tf
-
-# 🚨 HOTFIX: แก้อาการไลบรารีตีกัน (Monkey Patch) 🚨
-# โค้ดนี้ทำหน้าที่อุดรอยรั่วของเวอร์ชัน เพื่อหลอกให้ tf_keras ทำงานได้ โดยไม่ต้องไปแก้ requirements ให้เว็บพังอีก
-try:
-    def _dummy_register(*args, **kwargs): 
-        pass
-    
-    if not hasattr(tf, '__internal__'):
-        class _Internal: pass
-        tf.__internal__ = _Internal()
-        
-    tf.__internal__.register_load_context_function = _dummy_register
-    
-    import tensorflow._api.v2.compat.v2.internal as _tf_internal
-    _tf_internal.register_load_context_function = _dummy_register
-except Exception:
-    pass
-# --------------------------------------------------------
-
-import tf_keras
+import tf_keras as tfk  # 🚨 โหลดไลบรารีแบบคลีนๆ
 from PIL import Image
 import numpy as np
 import json
@@ -40,8 +20,8 @@ def load_nn_model():
     
     try:
         if os.path.exists(nn_path):
-            # โหลดด้วย tf_keras พร้อมปิด compile เพื่อเลี่ยง Error โครงสร้าง
-            model = tf_keras.models.load_model(nn_path, compile=False)
+            # 🚨 ใช้ tfk (tf_keras 2.17.0) โหลดไฟล์
+            model = tfk.models.load_model(nn_path, compile=False)
             labels = None
             
             if os.path.exists(lbl_path):
@@ -60,7 +40,6 @@ st.write("อัปโหลดรูปภาพผักหรือผลไ�
 
 nn_model, labels = load_nn_model()
 
-# 🚨 เปลี่ยนตัวเลขให้ตรงกับ Accuracy จริงของคุณตอนเทรน 
 TRAINING_ACCURACY = "88.75%"
 
 if nn_model:
