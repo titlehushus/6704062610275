@@ -1,8 +1,8 @@
 import os
-os.environ["TF_USE_LEGACY_KERAS"] = "1"  # 🚨 บังคับใช้ Keras รุ่นเก่าสำหรับอ่านไฟล์ .h5
+os.environ["TF_USE_LEGACY_KERAS"] = "1"  
 
 import streamlit as st
-import tensorflow as tf
+import tf_keras  # 🚨 เปลี่ยนจาก import tensorflow as tf มาเรียกใช้ tf_keras โดยตรง
 from PIL import Image
 import numpy as np
 import json
@@ -20,8 +20,8 @@ def load_nn_model():
     
     try:
         if os.path.exists(nn_path):
-            # ใส่ compile=False เพื่อข้ามการเช็กโครงสร้างฝั่ง Training
-            model = tf.keras.models.load_model(nn_path, compile=False)
+            # 🚨 เปลี่ยนมาใช้ tf_keras.models.load_model 
+            model = tf_keras.models.load_model(nn_path, compile=False)
             labels = None
             
             if os.path.exists(lbl_path):
@@ -40,7 +40,7 @@ st.write("อัปโหลดรูปภาพผักหรือผลไ�
 
 nn_model, labels = load_nn_model()
 
-# 🚨 จุดที่ต้องแก้: เปลี่ยนตัวเลขให้ตรงกับ Accuracy จริงของคุณตอนเทรน 🚨
+# 🚨 เปลี่ยนตัวเลขให้ตรงกับ Accuracy จริงของคุณตอนเทรน 
 TRAINING_ACCURACY = "88.75%"
 
 if nn_model:
