@@ -1,8 +1,28 @@
 import os
-os.environ["TF_USE_LEGACY_KERAS"] = "1"  # สำคัญมาก: ต้องอยู่บนสุด
+os.environ["TF_USE_LEGACY_KERAS"] = "1"
 
 import streamlit as st
-import tensorflow as tf  # 🚨 กลับมาใช้ tensorflow ตามปกติ
+import tensorflow as tf
+
+# 🚨 HOTFIX: แก้อาการไลบรารีตีกัน (Monkey Patch) 🚨
+# โค้ดนี้ทำหน้าที่อุดรอยรั่วของเวอร์ชัน เพื่อหลอกให้ tf_keras ทำงานได้ โดยไม่ต้องไปแก้ requirements ให้เว็บพังอีก
+try:
+    def _dummy_register(*args, **kwargs): 
+        pass
+    
+    if not hasattr(tf, '__internal__'):
+        class _Internal: pass
+        tf.__internal__ = _Internal()
+        
+    tf.__internal__.register_load_context_function = _dummy_register
+    
+    import tensorflow._api.v2.compat.v2.internal as _tf_internal
+    _tf_internal.register_load_context_function = _dummy_register
+except Exception:
+    pass
+# --------------------------------------------------------
+
+import tf_keras
 from PIL import Image
 import numpy as np
 import json
@@ -20,8 +40,8 @@ def load_nn_model():
     
     try:
         if os.path.exists(nn_path):
-            # 🚨 เรียกใช้จาก tf.keras ปกติ
-            model = tf.keras.models.load_model(nn_path, compile=False)
+            # โหลดด้วย tf_keras พร้อมปิด compile เพื่อเลี่ยง Error โครงสร้าง
+            model = tf_keras.models.load_model(nn_path, compile=False)
             labels = None
             
             if os.path.exists(lbl_path):
@@ -40,6 +60,7 @@ st.write("อัปโหลดรูปภาพผักหรือผลไ�
 
 nn_model, labels = load_nn_model()
 
+# 🚨 เปลี่ยนตัวเลขให้ตรงกับ Accuracy จริงของคุณตอนเทรน 
 TRAINING_ACCURACY = "88.75%"
 
 if nn_model:
@@ -54,12 +75,12 @@ if nn_model:
         
         with col2:
             with st.spinner('กำลังให้ AI ประมวลผล...'):
-                # Preprocessing
+                # 4. Preprocessing
                 img = image.convert('RGB').resize((224, 224))
                 img_array = np.array(img) / 255.0  
                 img_array = np.expand_dims(img_array, axis=0) 
                 
-                # Prediction
+                # 5. Prediction
                 preds = nn_model.predict(img_array)
                 idx = np.argmax(preds)
                 idx_str = str(idx)
@@ -71,7 +92,7 @@ if nn_model:
                 
                 confidence = float(np.max(preds)) * 100
                 
-                # แสดงผลลัพธ์
+                # 6. แสดงผลลัพธ์
                 st.markdown("### ผลลัพธ์การวิเคราะห์")
                 st.success(f"🎉 ตรวจพบว่าเป็น: **{result}**")
                 
