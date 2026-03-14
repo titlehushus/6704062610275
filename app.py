@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import streamlit as st
 
 # 1. ตั้งค่าหน้าเว็บ
