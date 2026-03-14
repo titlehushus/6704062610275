@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 os.environ["TF_USE_LEGACY_KERAS"] = "1"  # สั่งให้ใช้ระบบโหลดโมเดลแบบเก่า
 
