@@ -3,11 +3,29 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import json
+import tensorflow as tf
+from tensorflow import keras
+
+# --- Patch: รองรับ Keras เวอร์ชันใหม่ที่มี quantization_config ---
+class _PatchedDense(keras.layers.Dense):
+    def __init__(self, *args, **kwargs):
+        kwargs.pop('quantization_config', None)
+        super().__init__(*args, **kwargs)
+
+class _PatchedConv2D(keras.layers.Conv2D):
+    def __init__(self, *args, **kwargs):
+        kwargs.pop('quantization_config', None)
+        super().__init__(*args, **kwargs)
+
+CUSTOM_OBJECTS = {
+    'Dense': _PatchedDense,
+    'Conv2D': _PatchedConv2D,
+}
 
 # --- 1. ตั้งค่าหน้าเว็บ ---
 st.set_page_config(page_title="Neural Network", layout="wide", page_icon="🧠")
 
-# --- 2. การจัดการ Path และโหลดโมเดล ---
+# --- 2. โหลดโมเดล ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 @st.cache_resource
@@ -15,32 +33,30 @@ def load_nn_model():
     nn_path = os.path.join(BASE_DIR, 'Neural Network', 'nn_model.h5')
     lbl_path = os.path.join(BASE_DIR, 'Neural Network', 'class_labels.json')
 
+    if not os.path.exists(nn_path):
+        return None, None, nn_path
+
     try:
-        if not os.path.exists(nn_path):
-            return None, None
-
-        # โหลดผ่าน tensorflow.keras โดยตรง (ไม่ใช้ tf_keras)
-        import tensorflow as tf
-        model = tf.keras.models.load_model(nn_path, compile=False)
-
+        model = tf.keras.models.load_model(
+            nn_path,
+            compile=False,
+            custom_objects=CUSTOM_OBJECTS
+        )
         labels = None
         if os.path.exists(lbl_path):
             with open(lbl_path, 'r', encoding='utf-8') as f:
                 labels = json.load(f)
-
-        return model, labels
+        return model, labels, None
 
     except Exception as e:
-        st.error(f"Error loading model: {e}")
-        return None, None
+        return None, None, str(e)
 
-# --- 3. ส่วนแสดงผลหน้าเว็บ ---
+# --- 3. หน้าเว็บ ---
 st.title("🧠 ทดสอบระบบจำแนกภาพ (Neural Network)")
 st.write("อัปโหลดรูปภาพผักหรือผลไม้ เพื่อให้โมเดล AI ทำการจำแนกประเภท")
 
-nn_model, labels = load_nn_model()
+nn_model, labels, error_msg = load_nn_model()
 
-# 🚨 เปลี่ยนตัวเลขให้ตรงกับ Accuracy จริงของคุณตอนเทรน
 TRAINING_ACCURACY = "88.75%"
 
 if nn_model:
@@ -55,24 +71,17 @@ if nn_model:
 
         with col2:
             with st.spinner('กำลังให้ AI ประมวลผล...'):
-                # 4. Preprocessing
                 img = image.convert('RGB').resize((224, 224))
                 img_array = np.array(img) / 255.0
                 img_array = np.expand_dims(img_array, axis=0)
 
-                # 5. Prediction
                 preds = nn_model.predict(img_array)
-                idx = np.argmax(preds)
+                idx = int(np.argmax(preds))
                 idx_str = str(idx)
 
-                if labels:
-                    result = labels.get(idx_str, f"คลาส {idx_str}")
-                else:
-                    result = f"คลาส {idx_str}"
-
+                result = labels.get(idx_str, f"คลาส {idx_str}") if labels else f"คลาส {idx_str}"
                 confidence = float(np.max(preds)) * 100
 
-                # 6. แสดงผลลัพธ์
                 st.markdown("### ผลลัพธ์การวิเคราะห์")
                 st.success(f"🎉 ตรวจพบว่าเป็น: **{result}**")
 
@@ -82,8 +91,11 @@ if nn_model:
 
                 st.write("ระดับความมั่นใจในภาพนี้:")
                 st.progress(int(confidence))
-
 else:
-    target_path = os.path.join(BASE_DIR, 'Neural Network', 'nn_model.h5')
-    st.error(f"⚠️ ไม่พบไฟล์โมเดลที่ตำแหน่ง: {target_path}")
-    st.info("กรุณาตรวจสอบว่าชื่อโฟลเดอร์ 'Neural Network' และไฟล์ 'nn_model.h5' สะกดถูกต้อง")
+    if error_msg and '/' not in str(error_msg):
+        st.error(f"❌ โหลดโมเดลไม่สำเร็จ: {error_msg}")
+        st.info("💡 วิธีแก้: บันทึกโมเดลใหม่ด้วย model.save() บน Keras เวอร์ชันเดียวกับ server")
+    else:
+        target_path = os.path.join(BASE_DIR, 'Neural Network', 'nn_model.h5')
+        st.error(f"⚠️ ไม่พบไฟล์โมเดลที่ตำแหน่ง: {target_path}")
+        st.info("กรุณาตรวจสอบว่าชื่อโฟลเดอร์ 'Neural Network' และไฟล์ 'nn_model.h5' สะกดถูกต้อง")
