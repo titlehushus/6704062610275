@@ -21,7 +21,7 @@ def load_nn_model():
     try:
         if os.path.exists(nn_path):
             # โหลดโมเดล .h5
-            model = tf.keras.models.load_model(nn_path)
+            model = tf.keras.models.load_model(nn_path, compile=False)
             labels = None
             
             # โหลดไฟล์ Label ถ้ามี

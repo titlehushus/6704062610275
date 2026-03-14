@@ -3,5 +3,6 @@ pandas
 numpy
 streamlit>=1.30.0
 Pillow
-tensorflow
+tensorflow==2.15.0
+h5py
 altair==4.2.2
