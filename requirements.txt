@@ -1,7 +1,7 @@
 streamlit
-tensorflow
-pandas
+tensorflow-cpu
+Pillow
 numpy
+pandas
 scikit-learn
 xgboost
-Pillow
