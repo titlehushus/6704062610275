@@ -5,35 +5,49 @@ import numpy as np
 import json
 import os
 
-st.set_page_config(page_title="Neural Network", layout="wide")
+# --- 1. ตั้งค่าหน้าเว็บ ---
+st.set_page_config(page_title="Neural Network", layout="wide", page_icon="🧠")
+
+# --- 2. การจัดการ Path และโหลดโมเดล ---
+# ถอยออกจากโฟลเดอร์ pages 1 ชั้น เพื่อกลับไปที่ Root (MY_PJ)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 @st.cache_resource
 def load_nn_model():
-    nn_folders = ['Neural Network', 'neural network']
-    for folder in nn_folders:
-        nn_path = os.path.join(folder, 'nn_model.h5')
-        lbl_path = os.path.join(folder, 'class_labels.json')
+    # ระบุ Path ไปยังโฟลเดอร์ Neural Network โดยตรง
+    nn_path = os.path.join(BASE_DIR, 'Neural Network', 'nn_model.h5')
+    lbl_path = os.path.join(BASE_DIR, 'Neural Network', 'class_labels.json')
+    
+    try:
         if os.path.exists(nn_path):
+            # โหลดโมเดล .h5
             model = tf.keras.models.load_model(nn_path)
             labels = None
+            
+            # โหลดไฟล์ Label ถ้ามี
             if os.path.exists(lbl_path):
                 with open(lbl_path, 'r', encoding='utf-8') as f:
                     labels = json.load(f)
             return model, labels
-    return None, None
+        else:
+            return None, None
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None, None
 
+# --- 3. ส่วนแสดงผลหน้าเว็บ ---
 st.title("🧠 ทดสอบระบบจำแนกภาพ (Neural Network)")
 st.write("อัปโหลดรูปภาพผักหรือผลไม้ เพื่อให้โมเดล AI ทำการจำแนกประเภท")
 
 nn_model, labels = load_nn_model()
 
-# 🚨 จุดที่ต้องแก้: เปลี่ยนตัวเลข 88.75 ให้ตรงกับ Accuracy จริงของคุณตอนเทรน Neural Network 🚨
+# 🚨 จุดที่ต้องแก้: เปลี่ยนตัวเลขให้ตรงกับ Accuracy จริงของคุณตอนเทรน 🚨
 TRAINING_ACCURACY = "88.75%"
 
 if nn_model:
     uploaded_file = st.file_uploader("อัปโหลดรูปภาพ", type=["jpg", "png", "jpeg"])
+    
     if uploaded_file:
-        
         col1, col2 = st.columns([1, 1])
         
         with col1:
@@ -42,32 +56,39 @@ if nn_model:
         
         with col2:
             with st.spinner('กำลังให้ AI ประมวลผล...'):
-                # Preprocessing
+                # 4. Preprocessing (เตรียมรูปภาพ)
+                # ปรับขนาดเป็น 224x224 ตามที่โมเดลส่วนใหญ่ต้องการ (หรือปรับตามที่คุณเทรนมา)
                 img = image.convert('RGB').resize((224, 224))
-                img_array = np.array(img) / 255.0
-                img_array = np.expand_dims(img_array, axis=0)
+                img_array = np.array(img) / 255.0  # Normalization
+                img_array = np.expand_dims(img_array, axis=0) # เพิ่มมิติสำหรับ Batch size
                 
-                # Prediction
+                # 5. Prediction (การพยากรณ์)
                 preds = nn_model.predict(img_array)
                 idx = np.argmax(preds)
                 idx_str = str(idx)
                 
-                result = labels.get(idx_str, f"คลาส {idx_str}") if labels else f"คลาส {idx_str}"
+                # ดึงชื่อคลาสจาก JSON labels
+                if labels:
+                    result = labels.get(idx_str, f"คลาส {idx_str}")
+                else:
+                    result = f"คลาส {idx_str}"
                 
-                # คำนวณความมั่นใจ (Confidence Score) ของคลาสที่เลือก
+                # คำนวณความมั่นใจ (Confidence Score)
                 confidence = float(np.max(preds)) * 100
                 
-                # แสดงผลลัพธ์
+                # 6. แสดงผลลัพธ์
                 st.markdown("### ผลลัพธ์การวิเคราะห์")
                 st.success(f"🎉 ตรวจพบว่าเป็น: **{result}**")
                 
-                # แสดงค่า Accuracy เชิงสถิติ
-                st.metric(label="เปอร์เซ็นต์ความมั่นใจ (Confidence)", value=f"{confidence:.2f}%", help="ความน่าจะเป็นที่โมเดลคิดว่ารูปนี้ตรงกับผลลัพธ์ที่สุด")
-                st.metric(label="ความแม่นยำภาพรวมของโมเดล (Overall Accuracy)", value=TRAINING_ACCURACY, help="อ้างอิงจากคะแนน Accuracy ของ Validation Set ระหว่างการเทรน")
+                col_m1, col_m2 = st.columns(2)
+                col_m1.metric(label="ความมั่นใจ (Confidence)", value=f"{confidence:.2f}%")
+                col_m2.metric(label="ความแม่นยำรวม (Overall Accuracy)", value=TRAINING_ACCURACY)
                 
-                # แถบแสดงความมั่นใจ (Progress Bar)
-                st.write("ระดับความมั่นใจ:")
+                st.write("ระดับความมั่นใจในภาพนี้:")
                 st.progress(int(confidence))
                 
 else:
-    st.error("⚠️ ไม่พบไฟล์โมเดล (`nn_model.h5`) ในโฟลเดอร์ Neural Network")
+    # แสดง Error พร้อมบอก Path ที่ระบบพยายามหาไฟล์
+    target_path = os.path.join(BASE_DIR, 'Neural Network', 'nn_model.h5')
+    st.error(f"⚠️ ไม่พบไฟล์โมเดลที่ตำแหน่ง: {target_path}")
+    st.info("กรุณาตรวจสอบว่าชื่อโฟลเดอร์ 'Neural Network' และไฟล์ 'nn_model.h5' สะกดถูกต้อง (ตัวเล็ก-ใหญ่มีผล)")
