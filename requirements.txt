@@ -1,7 +1,7 @@
-streamlit
+streamlit==1.32.0
 pandas
 numpy
 scikit-learn
-tensorflow-cpu==2.15.0
 pillow
 joblib
+tensorflow-cpu==2.15.0
