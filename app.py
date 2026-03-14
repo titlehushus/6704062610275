@@ -7,93 +7,178 @@ st.set_page_config(page_title="Wildlife & Agriculture AI Project", page_icon="�
 def project_info_page():
     st.title("📂 ข้อมูลรายละเอียดโปรเจค (Project Documentation)")
     st.markdown("""
-    ยินดีต้อนรับสู่ระบบพยากรณ์อัจฉริยะ โครงการนี้ถูกพัฒนาขึ้นเพื่อประยุกต์ใช้เทคนิคทาง **Machine Learning** และ **Deep Learning** ในการแก้ปัญหาการจำแนกประเภทข้อมูลที่มีความซับซ้อน โดยแบ่งขอบเขตการทำงานออกเป็น 2 โมเดลหลัก ซึ่งจัดการกับข้อมูลที่แตกต่างกัน 
+    ยินดีต้อนรับสู่ระบบพยากรณ์อัจฉริยะ โครงการนี้ถูกพัฒนาขึ้นเพื่อประยุกต์ใช้เทคนิคทาง **Machine Learning** และ **Deep Learning** 
+    ในการแก้ปัญหาการจำแนกประเภทข้อมูลที่มีความซับซ้อน โดยแบ่งออกเป็น 2 โมเดลหลัก ซึ่งจัดการกับข้อมูลที่แตกต่างกัน 
     ทั้งข้อมูลเชิงโครงสร้าง (Structured Data) และข้อมูลภาพ (Unstructured Data)
     """)
     st.markdown("---")
-    
-    # แบ่งเป็น 2 Tabs สำหรับ 2 โมเดล ตามที่อาจารย์กำหนด 
-    tab1, tab2 = st.tabs(["🌳 โมเดลที่ 1: Ensemble Learning (Habitat Prediction)", "🧠 โมเดลที่ 2: Neural Network (Image Recognition)"])
 
+    tab1, tab2 = st.tabs([
+        "🌳 โมเดลที่ 1: Ensemble Learning (Habitat Prediction)",
+        "🧠 โมเดลที่ 2: Neural Network (Image Recognition)"
+    ])
+
+    # ===================== TAB 1: ENSEMBLE =====================
     with tab1:
-        st.header("1. Machine Learning แบบ Ensemble")
-        st.write("โมเดลนี้มุ่งเน้นการวิเคราะห์ข้อมูลทางอนุกรมวิธาน (Taxonomy) เพื่อทำนายถิ่นที่อยู่อาศัยของสัตว์ป่า รวมถึงให้คำแนะนำเบื้องต้นทางการแพทย์เมื่อเกิดเหตุฉุกเฉิน")
-        
+        st.header("โมเดลที่ 1: Machine Learning แบบ Ensemble")
+        st.write("โมเดลนี้ใช้ข้อมูลทางอนุกรมวิธาน (Taxonomy) เพื่อทำนายถิ่นที่อยู่อาศัยของสัตว์ป่า พร้อมให้คำแนะนำเบื้องต้นทางการแพทย์เมื่อถูกสัตว์กัด")
+
         col1, col2 = st.columns(2)
+
         with col1:
-            st.subheader("📝 รายละเอียดและที่มาของข้อมูล")
-            st.write("- **ชุดข้อมูล (Dataset):** Animal Kingdom Taxonomy จากแหล่งข้อมูล Kaggle")
-            st.write("- **คุณลักษณะ (Features):** ใช้ข้อมูลการจัดหมวดหมู่ทางชีววิทยา (เช่น Order, Family) เป็นตัวแปรต้น เพื่อวิเคราะห์ความสัมพันธ์กับสภาพแวดล้อมที่สัตว์อาศัยอยู่")
-            st.write("- **ความท้าทายของข้อมูล:** ข้อมูลในธรรมชาติมักมีการกระจายตัวไม่เท่ากัน สัตว์บางกลุ่มมีจำนวนสปีชีส์เยอะมาก ทำให้เกิดปัญหา Class Imbalance")
-            
+            st.subheader("📝 ที่มาและรายละเอียดของ Dataset")
+            st.markdown("""
+            - **ชุดข้อมูล:** Animal Kingdom Taxonomy ดาวน์โหลดจาก [Kaggle](https://www.kaggle.com/datasets/hasanarcas/animal-kingdom-taxonomy)
+            - **ขนาดข้อมูล:** ครอบคลุมสัตว์หลายพันสปีชีส์ จำแนกตามลำดับชั้นทางชีววิทยา
+            - **Features ที่ใช้เทรน:** `Order` (อันดับ) และ `Family` (วงศ์) ของสัตว์
+            - **Target (เป้าหมาย):** ถิ่นที่อยู่อาศัย (Habitat) ได้แก่ Forest/Urban, Grassland, Ground/Trees, General Terrestrial
+            """)
+
             st.subheader("🛠️ กระบวนการเตรียมข้อมูล (Data Preprocessing)")
             st.markdown("""
-            เพื่อให้โมเดลมีประสิทธิภาพสูงสุดและตรงตามมาตรฐาน ได้ผ่านขั้นตอนดังนี้:
-            1. **Handling Missing Values:** ตรวจสอบและจัดการค่าว่าง (Null) ด้วยเทคนิค Imputation เพื่อไม่ให้สูญเสียข้อมูลสำคัญ
-            2. **Categorical Encoding:** แปลงข้อมูลข้อความ (ชื่อสายพันธุ์/วงศ์) ให้เป็นตัวเลขด้วย Label/One-Hot Encoding
-            3. **Feature Scaling:** ปรับสเกลข้อมูลให้อยู่ในมาตรฐานเดียวกันด้วย `StandardScaler`
-            4. **Imbalanced Data Handling (SMOTE):** แก้ปัญหาคลาสที่ไม่สมดุลด้วยการสังเคราะห์ข้อมูลเพิ่ม (Synthetic Minority Over-sampling Technique) เพื่อไม่ให้โมเดลเอนเอียงไปยังคลาสที่มีจำนวนมาก
+            ข้อมูลดิบจาก Kaggle มีความไม่สมบูรณ์หลายจุด จึงต้องผ่านขั้นตอนดังนี้:
+
+            **1. จัดการค่าว่าง (Handling Missing Values)**
+            - ตรวจสอบด้วย `df.dropna()` บน columns `Order` และ `Family`
+            - ตัดแถวที่ไม่มีข้อมูล Order หรือ Family ออก เพื่อให้ข้อมูลที่เหลือสมบูรณ์ 100%
+
+            **2. แปลงข้อมูลข้อความเป็นตัวเลข (Label Encoding)**
+            - ชื่อสัตว์และวงศ์เป็น Text ซึ่งโมเดลไม่สามารถรับได้โดยตรง
+            - ใช้ `LabelEncoder` จาก scikit-learn แปลงทั้ง `Order`, `Family` และ `Target_Habitat`
+            - บันทึก encoder ไว้ใน `habitat_encoders.pkl` เพื่อใช้แปลงข้อมูลใหม่ตอน predict
+
+            **3. สร้าง Target Label (Feature Engineering)**
+            - Dataset ต้นฉบับไม่มีคอลัมน์ Habitat โดยตรง จึงสร้างขึ้นจากกฎอนุกรมวิธาน เช่น:
+              - `Carnivora` → Forest/Urban
+              - `Artiodactyla` → Grassland  
+              - `Squamata` → Ground/Trees
+              - อื่นๆ → General Terrestrial
             """)
 
         with col2:
-            st.subheader("🔬 โครงสร้างอัลกอริทึม (Stacking Ensemble)")
+            st.subheader("🔬 โครงสร้างอัลกอริทึม (Voting Ensemble)")
             st.markdown("""
-            เพื่อเพิ่มขีดความสามารถในการพยากรณ์ โปรเจคนี้เลือกใช้เทคนิค **Stacking Ensemble** โดยผสานจุดแข็งของ 3 อัลกอริทึมเข้าด้วยกัน:
-            
-            * **Base Learner 1: Random Forest**
-                * *บทบาท:* สร้าง Decision Trees ย่อยๆ จำนวนมาก และโหวตหาผลลัพธ์
-                * *ข้อดี:* ทนทานต่อ Noise และลดความเสี่ยงในการเกิด Overfitting
-            * **Base Learner 2: XGBoost (Extreme Gradient Boosting)**
-                * *บทบาท:* เรียนรู้และแก้ไขข้อผิดพลาด (Residuals) ของโมเดลก่อนหน้าอย่างต่อเนื่อง
-                * *ข้อดี:* มีประสิทธิภาพสูง จับความสัมพันธ์ที่ซับซ้อน (Non-linear) ได้ดีเยี่ยม
-            * **Meta-Learner: Logistic Regression**
-                * *บทบาท:* นำผลลัพธ์ความน่าจะเป็นจาก Random Forest และ XGBoost มาเป็น Input เพื่อตัดสินใจหาคำตอบสุดท้าย
-                * *ข้อดี:* ช่วยถ่วงน้ำหนักว่าควรเชื่อโมเดลพื้นฐานตัวไหนในบริบทใด ทำให้ผลลัพธ์สุดท้ายเสถียรที่สุด
-            """)
-            st.info("💡 กระบวนการนี้ทำให้ได้ค่า Accuracy ที่สูงกว่าการใช้โมเดลเดี่ยวๆ อย่างมีนัยสำคัญ")
+            ใช้เทคนิค **Soft Voting Ensemble** ผสานจุดแข็งของ 2 อัลกอริทึม:
 
+            **Base Model 1: Random Forest**
+            - `n_estimators=20` (สร้าง 20 ต้นไม้)
+            - `random_state=42`
+            - บทบาท: สร้าง Decision Trees หลายต้นพร้อมกัน แล้วโหวตหาผลลัพธ์
+            - ข้อดี: ทนทานต่อ Noise ลด Overfitting
+
+            **Base Model 2: Gradient Boosting**
+            - `n_estimators=10`
+            - `random_state=42`
+            - บทบาท: เรียนรู้แบบต่อเนื่อง แต่ละรอบแก้ข้อผิดพลาดของรอบก่อน
+            - ข้อดี: จับ Pattern ที่ซับซ้อนได้ดีกว่า Random Forest เดี่ยวๆ
+
+            **การรวมผล (Soft Voting)**
+            - รวมค่าความน่าจะเป็น (Probability) จากทั้ง 2 โมเดล
+            - คลาสที่ได้ค่าเฉลี่ยความน่าจะเป็นสูงสุดจะเป็นคำตอบสุดท้าย
+            """)
+            st.info("💡 Soft Voting ให้ผลแม่นยำกว่า Hard Voting เพราะนำ Confidence ของแต่ละโมเดลมาถ่วงน้ำหนักด้วย")
+
+            st.subheader("📊 ผลลัพธ์การเทรน")
+            col_a, col_b = st.columns(2)
+            col_a.metric("Ensemble Accuracy", "~92%", "Voting: Soft")
+            col_b.metric("จำนวน Target Classes", "4 คลาส", "Habitat types")
+
+    # ===================== TAB 2: NEURAL NETWORK =====================
     with tab2:
-        st.header("2. Neural Network (Artificial Neural Network)")
-        st.write("ระบบวิเคราะห์และจำแนกประเภทภาพถ่ายผักและผลไม้โดยอัตโนมัติ เพื่อประยุกต์ใช้ในอุตสาหกรรมการเกษตรและการคัดแยกสินค้า")
-        
+        st.header("โมเดลที่ 2: Neural Network ด้วย Transfer Learning (MobileNetV2)")
+        st.write("ระบบจำแนกประเภทภาพถ่ายผักและผลไม้ 36 ชนิด โดยอาศัย Pretrained Model เป็นฐาน พร้อมต่อยอด Classification Head ใหม่")
+
         col1, col2 = st.columns(2)
+
         with col1:
-            st.subheader("📝 รายละเอียดและที่มาของข้อมูล")
-            st.write("- **ชุดข้อมูล (Dataset):** Fruit and Vegetable Image Recognition จาก Kaggle")
-            st.write("- **ประเภทข้อมูล:** รูปภาพ (Unstructured Data) ที่มีความหลากหลายทั้งด้านแสง เงา และมุมกล้อง")
-            
-            st.subheader("🛠️ การจัดการข้อมูลภาพ (Image Preprocessing)")
+            st.subheader("📝 ที่มาและรายละเอียดของ Dataset")
             st.markdown("""
-            การจัดการรูปภาพก่อนเข้าสู่ Neural Network ถือเป็นหัวใจสำคัญ:
-            1. **Image Resizing:** ปรับสัดส่วนรูปภาพทั้งหมดให้มีขนาดเท่ากัน (เช่น 224x224 พิกเซล) เพื่อให้เข้ากับ Input Layer
-            2. **Pixel Normalization:** ปรับค่าพิกเซลจาก 0-255 ให้อยู่ในช่วง 0-1 (แบ่งด้วย 255.0) เพื่อให้โมเดลคอนเวอร์จ (Converge) เข้าสู่จุดต่ำสุดได้เร็วขึ้น
-            3. **Data Augmentation:** สุ่มหมุนภาพ พลิกภาพ หรือปรับแสงระหว่างการเทรน เพื่อเพิ่มความหลากหลาย และป้องกันปัญหาโมเดลจำข้อสอบ (Overfitting)
+            - **ชุดข้อมูล:** Fruit and Vegetable Image Recognition จาก [Kaggle](https://www.kaggle.com/datasets/kritikseth/fruit-and-vegetable-image-recognition)
+            - **จำนวนคลาส:** 36 ชนิด (เช่น apple, banana, carrot, tomato ...)
+            - **แบ่งข้อมูล 3 ส่วน:**
+              - Train: 3,115 ภาพ
+              - Validation: 351 ภาพ
+              - Test: 359 ภาพ
+            - **ประเภทข้อมูล:** รูปภาพ (Unstructured Data) หลากหลายมุมกล้อง แสง และพื้นหลัง
+            """)
+
+            st.subheader("🛠️ การเตรียมข้อมูลภาพ (Image Preprocessing)")
+            st.markdown("""
+            **1. Resizing**
+            - ปรับทุกภาพให้เป็น **224 × 224 pixels** เพื่อให้ตรงกับ Input ของ MobileNetV2
+
+            **2. Pixel Normalization**
+            - หารค่าพิกเซลด้วย 255.0 → ค่าอยู่ในช่วง **[0, 1]**
+            - ช่วยให้โมเดล Converge เร็วขึ้นและเสถียรกว่า
+
+            **3. Data Augmentation (เฉพาะชุด Train)**
+            - `rotation_range=20` — หมุนภาพแบบสุ่ม ±20 องศา
+            - `width_shift_range=0.2` — เลื่อนภาพซ้าย/ขวา 20%
+            - `height_shift_range=0.2` — เลื่อนภาพขึ้น/ลง 20%
+            - `horizontal_flip=True` — พลิกภาพในแนวนอน
+            - **ผล:** เพิ่มความหลากหลายของข้อมูล ป้องกัน Overfitting
+            - ชุด Validation และ Test **ไม่** ทำ Augmentation เพื่อวัดผลบนภาพจริง
             """)
 
         with col2:
-            st.subheader("🧠 โครงสร้างสถาปัตยกรรม (Custom ANN Architecture)")
+            st.subheader("🧠 โครงสร้างสถาปัตยกรรม (Transfer Learning)")
             st.markdown("""
-            โมเดลนี้ได้รับการออกแบบโครงสร้าง (Network Topology) ขึ้นมาเองทั้งหมด (From Scratch) โดยไม่ใช้ Pre-trained Model:
-            
-            * **Input Layer:** รับเมทริกซ์รูปภาพและทำการ `Flatten` ให้เป็นเวกเตอร์ 1 มิติ
-            * **Hidden Layers (Multi-Layer Perceptron):**
-                * ประกอบด้วยชั้น Dense Layer ไม่ต่ำกว่า 3 ชั้น
-                * ใช้ **ReLU (Rectified Linear Unit)** เป็น Activation Function เพื่อแก้ปัญหา Vanishing Gradient
-                * มีการแทรก **Dropout Layer** (เช่น 0.2 - 0.5) เพื่อสุ่มปิดการทำงานของบางโหนด บังคับให้เน็ตเวิร์กกระจายการเรียนรู้
-            * **Output Layer:**
-                * จำนวนโหนดเท่ากับจำนวนคลาสของผักและผลไม้ทั้งหมด
-                * ใช้ **Softmax Function** แปลงค่าลอจิต (Logits) ให้ออกมาเป็นค่าความน่าจะเป็น (Probability) รวมกันได้ 1.0 พอดี
+            ใช้เทคนิค **Transfer Learning** โดยนำ MobileNetV2 ที่เทรนบน ImageNet มาต่อยอด:
+
+            **ส่วนที่ 1: Base Model (MobileNetV2)**
+            - โหลดน้ำหนักจาก ImageNet (`weights='imagenet'`)
+            - `include_top=False` — ตัดส่วน Classification Head เดิมออก
+            - `trainable=False` — แช่แข็ง (Freeze) น้ำหนักเดิมทั้งหมด
+            - ทำหน้าที่สกัด Feature จากรูปภาพแทนการสร้างใหม่จากศูนย์
+
+            **ส่วนที่ 2: Custom Classification Head**
+            - `GlobalAveragePooling2D()` — ลด Feature Map ให้เป็น Vector
+            - `Dense(256, activation='relu')` — Hidden Layer 256 โหนด
+            - `Dropout(0.5)` — สุ่มปิด 50% ของโหนด ป้องกัน Overfitting
+            - `Dense(36, activation='softmax')` — Output 36 คลาส
+
+            **การ Compile**
+            - Optimizer: `Adam`
+            - Loss: `categorical_crossentropy`
+            - Metrics: `accuracy`
             """)
-            st.success("🎯 การออกแบบโครงสร้างนี้ ผ่านกระบวนการทดลองปรับจูน Hyperparameters เพื่อให้สอดคล้องกับขนาดของ Dataset มากที่สุด")
 
+            st.subheader("📊 ผลลัพธ์การเทรน (10 Epochs)")
+            col_a, col_b, col_c = st.columns(3)
+            col_a.metric("Test Accuracy", "94.99%", "↑ จาก Epoch 1: 40%")
+            col_b.metric("Val Accuracy", "95.16%", "Epoch 10")
+            col_c.metric("จำนวน Classes", "36 ชนิด")
+            
+            st.markdown("""
+            | Epoch | Train Acc | Val Acc |
+            |-------|-----------|---------|
+            | 1     | 40.58%    | 81.48%  |
+            | 3     | 72.01%    | 90.03%  |
+            | 5     | 78.65%    | 91.74%  |
+            | 8     | 81.99%    | 93.45%  |
+            | 10    | 84.62%    | 95.16%  |
+            """)
+
+    # ===================== REFERENCES =====================
     st.markdown("---")
-    st.subheader("🔗 แหล่งอ้างอิงและเทคโนโลยี (References & Tech Stack)")
-    st.write("- **Datasets:** [Animal Kingdom Taxonomy](https://www.kaggle.com/datasets/hasanarcas/animal-kingdom-taxonomy) | [Fruit and Vegetable Recognition](https://www.kaggle.com/datasets/kritikseth/fruit-and-vegetable-image-recognition)")
-    st.write("- **Core Frameworks:** `Python`, `Streamlit` (UI), `Pandas`, `NumPy`")
-    st.write("- **Machine Learning:** `Scikit-learn` (Pipeline, Encoders), `XGBoost`")
-    st.write("- **Deep Learning:** `TensorFlow` / `Keras`")
+    st.subheader("🔗 แหล่งอ้างอิงและเทคโนโลยีที่ใช้ (References & Tech Stack)")
 
-# 3. การตั้งค่า Navigation
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("**📦 Datasets**")
+        st.markdown("- [Animal Kingdom Taxonomy — Kaggle](https://www.kaggle.com/datasets/hasanarcas/animal-kingdom-taxonomy)")
+        st.markdown("- [Fruit and Vegetable Image Recognition — Kaggle](https://www.kaggle.com/datasets/kritikseth/fruit-and-vegetable-image-recognition)")
+    with col2:
+        st.markdown("**🤖 Machine Learning**")
+        st.markdown("- `scikit-learn` — RandomForestClassifier, GradientBoostingClassifier, VotingClassifier, LabelEncoder")
+        st.markdown("- `pandas` / `numpy` — Data manipulation")
+    with col3:
+        st.markdown("**🧠 Deep Learning & UI**")
+        st.markdown("- `TensorFlow 2.x` / `Keras` — MobileNetV2, ImageDataGenerator")
+        st.markdown("- `Streamlit` — Web application framework")
+        st.markdown("- `Pillow` — Image processing")
+
+# 3. Navigation
 pg = st.navigation({
     "เมนูหลัก": [
         st.Page(project_info_page, title="ข้อมูลโปรเจค", icon="📂"),
@@ -104,5 +189,4 @@ pg = st.navigation({
     ]
 })
 
-# 4. รันระบบ
 pg.run()
